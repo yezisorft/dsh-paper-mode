@@ -1,0 +1,9 @@
+# dsh-paper-mode bundle patch.
+#
+# Inserts one Host row and its matching Client half. While the row is enabled
+# the session runs in paper mode; disabling the row removes the prompt section,
+# the paper-writing skill, the /paper command and the UI badge together.
+- insert:
+    - id: dsh-paper-mode
+      name: 'dsh-paper-mode'
+      config: {}

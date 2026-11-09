@@ -1,0 +1,11 @@
+# dependencies & build output
+node_modules/
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# local verification artifacts (raw screenshots contain private desktop content)
+evidence/
+交付验证报告.md
+dev/*.local.*

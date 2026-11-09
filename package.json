@@ -1,0 +1,59 @@
+{
+  "name": "dsh-paper-mode",
+  "version": "0.1.0",
+  "description": "论文模式：一键把会话切换为学术论文写作助手——五阶段写作法、引言/段落/结论三公式、GB/T 学位论文与期刊论文版式规范、paper-writing 技能与空白模板，并在界面上常驻模式徽标。",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "skills/**/*.md",
+    "resources/*.md",
+    "README.md"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "paper",
+    "academic-writing",
+    "thesis",
+    "gb-t"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  },
+  "engines": {
+    "dsh": ">=0.2.0-rc.1"
+  },
+  "author": {
+    "name": "yezisorft",
+    "url": "https://github.com/yezisorft"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yezisorft/dsh-paper-mode.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yezisorft/dsh-paper-mode/issues"
+  },
+  "homepage": "https://github.com/yezisorft/dsh-paper-mode#readme",
+  "license": "MIT"
+}

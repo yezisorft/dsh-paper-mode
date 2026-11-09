@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="论文模式">
+  <defs>
+    <linearGradient id="pm-bg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0f4c5c"/>
+      <stop offset="1" stop-color="#1d7874"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#pm-bg)"/>
+  <path d="M18 12h19l9 9v31H18z" fill="#fdfdfb"/>
+  <path d="M37 12v9h9" fill="#d7e6e4"/>
+  <path d="M24 27h13M24 33h14M24 39h10" stroke="#0f4c5c" stroke-width="2.4" stroke-linecap="round"/>
+  <circle cx="45" cy="45" r="8" fill="#e4572e"/>
+  <path d="M41.6 45.2l2.4 2.4 4.2-4.6" fill="none" stroke="#fdfdfb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
