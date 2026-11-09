@@ -21,16 +21,17 @@
 
 > 需要 DeepSeek Harness 0.2.x（`engines.dsh >= 0.2.0-rc.1`）。插件没有运行时依赖，只使用 Node 内置模块。
 
-方式一：在 DSH 插件管理里安装 bundle，安装源填 GitHub 简写：
+方式一：在 DSH 插件管理里安装 bundle，安装源填仓库地址（git 地址，也接受 pnpm 简写）：
 
 ```text
-github:yezisorft/dsh-paper-mode
+https://github.com/yezisorft/dsh-paper-mode
+# 或： github:yezisorft/dsh-paper-mode
 ```
 
 方式二：命令行（`dsh` 在 PATH 时）：
 
 ```sh
-dsh plugin install github:yezisorft/dsh-paper-mode
+dsh plugin install https://github.com/yezisorft/dsh-paper-mode
 ```
 
 方式三：本地开发目录直接 link 安装，把 `<本目录>` 换成仓库克隆路径：
