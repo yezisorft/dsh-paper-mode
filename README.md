@@ -10,12 +10,14 @@
 | --- | --- | --- |
 | 系统提示段 | `paper:mode`（order 550）：五阶段法、引言/段落/结论三公式、标准结构、GB/T 版式与引文硬约束、工作方式与学术诚信 | 从下一次模型请求起消失 |
 | 技能 | `paper-writing` runtime skill：完整方法、格式细则、参考文献著录、自检清单；模型按需通过 `skill` 工具加载 | 技能目录中不再出现 |
-| 命令 | `/paper`：`status` / `template` / `checklist` 三个分支 | 斜杠命令失效 |
+| 命令 | `/paper`：`status` / `template` / `checklist` / `aigc` 四个分支 | 斜杠命令失效 |
 | 界面 | 输入框下方常驻「论文模式」徽标（点击看用法）+ 每个标签页首次进入的一次性提示 | 徽标与提示消失 |
 
 ![论文模式：/paper 命令与技能候选、输入框下方徽标](docs/screenshot-paper-mode.png)
 
 内置技能覆盖：五阶段写作法；引言/段落/结论三公式；期刊与学位论文的标准结构；A4 版式与标题层级；三线表、表题上图题下；公式与数字标点；GB/T 7714—2015 顺序编码制参考文献著录；学术诚信与格式自检清单。插件自带一份《学术论文格式空白模板》，`/paper template` 可直接取出。
+
+0.2.0 起新增**查重 / 查 AIGC 子模式**：`/paper aigc` 会先提醒用户去 PaperPure 查 AIGC、PaperPass 查重，再把 18 条改写契约作为用户消息交给模型，并指示模型加载 `aigc-reduce` 技能。改写只针对 PDF 报告中标红/高风险的片段，保留引用、数据、术语和原意，目标是把文字改成本科论文语境下平实自然的书面语，而不是网络口语。
 
 ## 安装
 
@@ -47,6 +49,7 @@ dsh plugin install <本目录>
 - `/paper`：显示论文模式状态与用法（插件版本、提示段、已注册技能、资源目录、退出方式）。
 - `/paper template`：输出随插件打包的《学术论文格式空白模板》全文。
 - `/paper checklist`：输出论文格式自检清单（版式/标题/摘要/关键词/图表/公式/参考文献/文字/诚信）。
+- `/paper aigc`：进入查重 / 查 AIGC 模式。先按提示去 PaperPure（https://paperpure.net/）做 AIGC 检测、去 PaperPass（https://www.paperpass.com/）做文字查重，再把 PDF 报告中标红/高风险的片段贴回来；模型会加载 `aigc-reduce` 技能，按「只改标红片段 + 18 条改写要求 + 三轮降重协议」处理。
 - 直接提出论文类任务（撰写、修改、检查论文、开题报告、文献综述、摘要、参考文献等），模型会按 `paper-writing` 技能与提示段契约工作；需要完整方法细节时可要求模型「加载 paper-writing 技能」。
 
 ## 停用 / 卸载
@@ -61,7 +64,7 @@ dsh plugin install <本目录>
 node dev/selftest.mjs
 ```
 
-自测覆盖 11 项：清单/补丁/显示资源、系统提示段名称与顺序（550）、段文本关键规则、技能正文长度与关键章节、`/paper` 三个分支、注销顺序、Client 半的槽位与本地化注册。CI 在每次 push / PR 时运行同一脚本。
+自测覆盖 11 项：清单/补丁/显示资源、系统提示段名称与顺序（550）、段文本关键规则、技能正文长度与关键章节、`/paper` 四个分支（含 `aigc` 的消息注入）、注销顺序、Client 半的槽位与本地化注册。CI 在每次 push / PR 时运行同一脚本。
 
 安装后可跑 `dev/verify-live.ps1`（Windows PowerShell）复核 profile 里的安装状态与插件文件。
 
@@ -76,6 +79,7 @@ dsh-paper-mode/
 ├─ icon.svg                      插件图标（原创）
 ├─ skills/paper-writing/SKILL.md 技能正文
 ├─ resources/paper-template.md   学术论文格式空白模板
+├─ resources/aigc-mode.md        查重 / 查 AIGC 执行契约（18 条 + 三轮协议）
 ├─ examples/paper-writing-sample.md  按模板写成的示例论文
 ├─ dev/selftest.mjs              自测
 ├─ dev/verify-live.ps1           安装现场校验
@@ -86,6 +90,7 @@ dsh-paper-mode/
 
 - 「论文模式」的开关是**插件级**的，不提供会话内 `/paper on|off`（避免与会话日志投影耦合）。
 - 不打包完整版方法指南；技能正文是面向模型的操作版，模板单独打包。
+- `aigc-reduce` 是外部技能，插件只负责在 `/paper aigc` 时指示模型加载它；若 profile 未安装该技能，模型会退回使用插件内置的 18 条契约与三轮协议摘要。
 - 界面只做徽标与一次性提示，不接管布局、不替换宿主组件、不写宿主 DOM。
 - 引用与数据真实性由使用者的来源决定：插件要求模型对无法核实的引用标注「待核实」，不保证自动生成的内容可直接提交。
 

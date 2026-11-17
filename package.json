@@ -1,7 +1,7 @@
 {
   "name": "dsh-paper-mode",
-  "version": "0.1.0",
-  "description": "论文模式：一键把会话切换为学术论文写作助手——五阶段写作法、引言/段落/结论三公式、GB/T 学位论文与期刊论文版式规范、paper-writing 技能与空白模板，并在界面上常驻模式徽标。",
+  "version": "0.2.0",
+  "description": "论文模式：一键把会话切换为学术论文写作助手——五阶段写作法、引言/段落/结论三公式、GB/T 学位论文与期刊论文版式规范、paper-writing 技能、空白模板，以及查重/查 AIGC 子模式（PaperPure + PaperPass + aigc-reduce）。",
   "type": "module",
   "exports": {
     ".": "./index.js",
@@ -26,7 +26,9 @@
     "paper",
     "academic-writing",
     "thesis",
-    "gb-t"
+    "gb-t",
+    "aigc",
+    "plagiarism"
   ],
   "dsh": {
     "bundle": {

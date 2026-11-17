@@ -45,7 +45,7 @@ check('package manifest declares the bundle and client halves', () => {
   assert.equal(pkg.exports?.['./client'], './client.js')
   assert.ok(pkg.exports?.['./locale/*.json'])
   assert.ok(pkg.exports?.['./icon'])
-  for (const file of ['index.js', 'client.js', 'cordis.patch.yml', 'icon.svg', 'skills/paper-writing/SKILL.md', 'resources/paper-template.md']) {
+  for (const file of ['index.js', 'client.js', 'cordis.patch.yml', 'icon.svg', 'skills/paper-writing/SKILL.md', 'resources/paper-template.md', 'resources/aigc-mode.md']) {
     assert.ok(exists(file), `missing packaged file: ${file}`)
     assert.ok(String(pkg.files ?? '').includes(file.split('/')[0]), `files[] does not cover ${file}`)
   }
@@ -140,7 +140,7 @@ check('paper-mode prompt section is ordered and carries the doctrine', () => {
   assert.ok(Number.isFinite(section.order), 'section order must be finite')
   assert.equal(section.order, 550)
   const text = typeof section.text === 'function' ? section.text({}) : section.text
-  for (const needle of ['论文模式', '五阶段法', '主题句', 'GB/T 7714', '三线表', '学术诚信']) {
+  for (const needle of ['论文模式', '五阶段法', '主题句', 'GB/T 7714', '三线表', '学术诚信', 'PaperPure', 'PaperPass', 'aigc-reduce']) {
     assert.ok(text.includes(needle), `section text missing ${needle}`)
   }
 })
@@ -160,12 +160,12 @@ check('paper-writing runtime skill is registered with the full body', () => {
   assert.ok(skill.resourceBase.path.endsWith('resources'))
 })
 
-check('/paper command answers status, template and checklist', () => {
+check('/paper command answers status, template, checklist and aigc', () => {
   assert.equal(registrations.commands.length, 1)
   const command = registrations.commands[0]
   assert.equal(command.name, 'paper')
   assert.ok(typeof command.description === 'string' && command.description.length > 0)
-  const invoke = (rawInput) => command.handler({ rawInput, agent: {}, attachments: [], signal: new AbortController().signal })
+  const invoke = (rawInput, agent = {}) => command.handler({ rawInput, agent, attachments: [], signal: new AbortController().signal })
   const status = invoke('')
   assert.equal(status.kind, 'success')
   assert.ok(status.text.includes('论文模式：已启用'))
@@ -176,6 +176,20 @@ check('/paper command answers status, template and checklist', () => {
   const checklist = invoke('checklist')
   assert.equal(checklist.kind, 'success')
   assert.ok(checklist.text.includes('三线表'))
+  const steered = []
+  const aigc = invoke('aigc', { steer(message) { steered.push(message) } })
+  assert.equal(aigc.kind, 'success')
+  assert.ok(aigc.text.includes('PaperPure'))
+  assert.ok(aigc.text.includes('PaperPass'))
+  assert.equal(steered.length, 1, 'aigc mode must steer exactly one user message')
+  assert.equal(steered[0].role, 'user')
+  assert.equal(steered[0].source.kind, 'user')
+  const aigcText = steered[0].content.map((block) => block.text ?? '').join('\n')
+  for (const needle of ['PaperPure', 'PaperPass', 'aigc-reduce', '连续 8 个字', '的、了、到、过', '学术语体', '只改标红片段']) {
+    assert.ok(aigcText.includes(needle), `aigc prompt missing ${needle}`)
+  }
+  const noAgent = invoke('aigc')
+  assert.equal(noAgent.kind, 'error')
   const unknown = invoke('nope')
   assert.equal(unknown.kind, 'error')
 })

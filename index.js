@@ -17,6 +17,7 @@
  * The package has no runtime dependencies: it imports Node built-ins only, so a
  * locally linked checkout needs no install step.
  */
+import { randomUUID } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
@@ -29,6 +30,7 @@ export const inject = ['systemPrompt', 'skills', 'commands']
 const PACKAGE_JSON_URL = new URL('./package.json', import.meta.url)
 const SKILL_URL = new URL('./skills/paper-writing/SKILL.md', import.meta.url)
 const TEMPLATE_URL = new URL('./resources/paper-template.md', import.meta.url)
+const AIGC_MODE_URL = new URL('./resources/aigc-mode.md', import.meta.url)
 const RESOURCES_DIR = fileURLToPath(new URL('./resources', import.meta.url))
 
 /** The system-prompt section name; unique across the profile. */
@@ -72,7 +74,13 @@ const SECTION_TEXT = `## 论文模式（已启用）
 - 分阶段交付并自检；引用文献必须是可核查的真实来源，无法确认时标注"待核实"，不得编造作者、年份、页码或 DOI。
 - 除用户另有要求外，正文用 Markdown 输出，标题层级与上述编号一致；需要 Word 文档时用办公文档工具生成 .docx 并保留样式。
 - 学术诚信：直接引用加引号并注明页码，转述注明出处；不得伪引/漏引；使用生成式 AI 辅助写作时按所在单位要求声明使用范围，并对其输出的事实与引用负责。
-- 需要完整方法细节、模板与自检清单时，加载 \`paper-writing\` skill；\`/paper template\` 取出空白模板，\`/paper checklist\` 取出格式自检清单。`
+- 需要完整方法细节、模板与自检清单时，加载 \`paper-writing\` skill；\`/paper template\` 取出空白模板，\`/paper checklist\` 取出格式自检清单。
+
+**查重 / 查 AIGC 子模式**
+- 当用户要求查重、降重、降低 AIGC 率、去 AI 味，或运行 \`/paper aigc\` 时，先提醒用户：AIGC 检测去 PaperPure（https://paperpure.net/），文字查重去 PaperPass（https://www.paperpass.com/），并以检测报告中标红/高风险的片段作为输入。
+- 加载 \`aigc-reduce\` skill，按「划保护片段 → 去 AI 痕迹 → 补书面学术特征 → Anti-AI 审计 → 终检」执行；完整改写契约由 \`/paper aigc\` 注入。
+- 只改标红片段，不做全篇重写；引用编号、图表编号、公式、数据、专业术语和直接引语原样保留，不编造事实或文献。
+- 目标是本科论文语境下平实、自然、通顺的书面表达，不是网络口语；学术语体与事实/术语/字数保真优先于“口语化”要求。`
 
 /** Read one packaged asset as UTF-8 text; a missing asset fails activation loudly. */
 function readAsset(url, label) {
@@ -98,6 +106,7 @@ const COMMAND_USAGE = [
   '/paper status    显示模式、技能与资源状态',
   '/paper template  输出学术论文格式空白模板',
   '/paper checklist 输出论文格式自检清单',
+  '/paper aigc      进入查重 / 查 AIGC 模式（提醒检测平台 + 注入改写契约 + 调用 aigc-reduce）',
 ].join('\n')
 
 /** Format the self-check list as plain chat text. */
@@ -112,13 +121,55 @@ const CHECKLIST_TEXT = `论文格式自检清单
 8. 文字：术语全文统一；无错别字；中文标点全角；数值范围用"～"；缩略语首次出现给全称。
 9. 诚信：直接引用加引号并注明页码；转述注明出处；使用生成式 AI 辅助时按单位要求声明范围。`
 
+/** UI-only confirmation shown after `/paper aigc` steers the model. */
+const AIGC_START_NOTICE = `已进入查重 / 查 AIGC 模式。
+
+先做两步检测，再把报告里的高风险片段发给我：
+1. AIGC 检测：PaperPure  https://paperpure.net/
+2. 文字查重：PaperPass  https://www.paperpass.com/
+
+优先处理 PDF 报告中标红、标黄或标注为高风险的段落；一次贴一段即可，也可以直接说要改哪一节。`
+
+/**
+ * Build the user message that actually wakes the model. Command results render
+ * only in the UI, so the mode contract has to travel as a steered user message.
+ */
+function createUserTextMessage(text) {
+  return Object.freeze({
+    id: randomUUID(),
+    role: 'user',
+    content: Object.freeze([Object.freeze({ type: 'text', text })]),
+    source: Object.freeze({ kind: 'user' }),
+  })
+}
+
+/** Wrap the packaged AIGC contract in an actionable instruction. */
+function buildAigcPrompt(contract) {
+  return `【已通过 /paper aigc 进入查重 / 查 AIGC 模式】
+
+请立即按下面的《查重 / 查 AIGC 模式执行契约》工作。第一步先用一两句话提醒用户：AIGC 检测去 PaperPure（https://paperpure.net/），文字查重去 PaperPass（https://www.paperpass.com/），并把 PDF 报告中标红/高风险的片段发给你。用户如果已经给了片段，就直接开始处理；没给就先等用户提供，不要凭空猜测论文内容。
+
+处理前必须加载 \`aigc-reduce\` skill，按它的三轮协议执行。下面的契约与技能同时生效；两者冲突时，按契约里的优先级裁决。如果当前环境没有这个技能，就按契约第五节的五步流程执行，不能跳过保护片段和终检。只改标红片段，不做全篇重写；不编造数据、文献或页码；保持本科论文的平实书面语，不写成网络口语。
+
+---
+${contract.trim()}
+---
+
+再次强调：学术语体、事实、术语、引用和原意是硬底线，降低 AI 痕迹不能靠加语气词、网络词或碎句来凑。`
+}
+
 /** Build the `/paper` command definition over the packaged assets. */
 function createPaperCommand(ctx) {
   const version = readVersion()
   let template = ''
+  let aigcContract = ''
   const loadTemplate = () => {
     if (template === '') template = readAsset(TEMPLATE_URL, 'paper template')
     return template
+  }
+  const loadAigcContract = () => {
+    if (aigcContract === '') aigcContract = readAsset(AIGC_MODE_URL, 'AIGC mode contract')
+    return aigcContract
   }
   const status = () => {
     const lines = [
@@ -126,6 +177,7 @@ function createPaperCommand(ctx) {
       `插件：dsh-paper-mode v${version}`,
       `系统提示段：${SECTION_NAME}（order ${SECTION_ORDER}）`,
       '已注册技能：paper-writing（可通过 skill 工具按需加载）',
+      '查重 / 查 AIGC：/paper aigc（先提醒 PaperPure + PaperPass，再注入契约并调用 aigc-reduce）',
       `资源目录：${RESOURCES_DIR}`,
       '退出方式：在插件管理中停用「论文模式」插件，停用后提示段、技能与命令立即失效。',
     ]
@@ -133,9 +185,9 @@ function createPaperCommand(ctx) {
   }
   return {
     name: 'paper',
-    description: '论文模式状态、模板与格式自检清单',
-    input: { hint: '[status|template|checklist]' },
-    handler: ({ rawInput }) => {
+    description: '论文模式状态、模板、格式自检与查重/查 AIGC 模式',
+    input: { hint: '[status|template|checklist|aigc]' },
+    handler: ({ rawInput, agent }) => {
       const action = rawInput.trim().toLowerCase()
       if (action === '' || action === 'help' || action === 'status') {
         return { kind: 'success', text: `${status()}\n\n用法：\n${COMMAND_USAGE}` }
@@ -145,6 +197,19 @@ function createPaperCommand(ctx) {
       }
       if (action === 'checklist') {
         return { kind: 'success', text: CHECKLIST_TEXT }
+      }
+      if (action === 'aigc') {
+        if (typeof agent?.steer !== 'function') {
+          return { kind: 'error', text: '当前界面不支持启动模型任务，无法进入查重 / 查 AIGC 模式。请在 Web 对话界面中使用 /paper aigc。' }
+        }
+        try {
+          const contract = loadAigcContract()
+          agent.steer(createUserTextMessage(buildAigcPrompt(contract)))
+          return { kind: 'success', text: AIGC_START_NOTICE }
+        } catch (error) {
+          ctx.logger?.warn?.(`dsh-paper-mode: failed to start AIGC mode: ${String(error)}`)
+          return { kind: 'error', text: `查重 / 查 AIGC 模式启动失败：${String(error)}` }
+        }
       }
       ctx.logger?.debug?.(`dsh-paper-mode: unknown /paper argument ${JSON.stringify(rawInput)}`)
       return { kind: 'error', text: `未知的 /paper 参数。\n\n用法：\n${COMMAND_USAGE}` }

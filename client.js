@@ -31,6 +31,7 @@ window.__ModuleLoader__.load({
         'panel.format': '版式、图表与参考文献遵循 GB/T 规范',
         'panel.template': '输入 /paper template 取空白模板',
         'panel.checklist': '输入 /paper checklist 取格式自检清单',
+        'panel.aigc': '输入 /paper aigc 查重 / 查 AIGC（PaperPure + PaperPass）',
         'panel.exit': '在插件管理中停用「论文模式」即可退出',
         'notice.title': '论文模式已开启',
         'notice.body': '从这一步起，论文类任务会按五阶段法与 GB/T 规范执行：先定问题与提纲，再写结构与正文。',
@@ -45,6 +46,7 @@ window.__ModuleLoader__.load({
         'panel.format': 'Layout, figures and references follow the GB/T rules',
         'panel.template': 'Run /paper template for the blank template',
         'panel.checklist': 'Run /paper checklist for the format self-check list',
+        'panel.aigc': 'Run /paper aigc for plagiarism / AIGC checks (PaperPure + PaperPass)',
         'panel.exit': 'Disable "Paper mode" in Plugin Manager to exit',
         'notice.title': 'Paper mode is on',
         'notice.body': 'From this step on, paper tasks follow the five-stage method and GB/T rules: problem and outline first, then structure and drafting.',
@@ -86,7 +88,7 @@ window.__ModuleLoader__.load({
         function Badge() {
           useLocaleTick()
           const [open, setOpen] = React.useState(false)
-          const lines = ['panel.method', 'panel.format', 'panel.template', 'panel.checklist', 'panel.exit']
+          const lines = ['panel.method', 'panel.format', 'panel.template', 'panel.checklist', 'panel.aigc', 'panel.exit']
           return h(
             'div',
             { style: { display: 'flex', justifyContent: 'flex-end', padding: '4px 4px 0' } },
